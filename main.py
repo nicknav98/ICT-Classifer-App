@@ -3,35 +3,33 @@ from tkinter.filedialog import askopenfile
 import csv
 import PyPDF2
 
-
 # GUI setup
 root = tk.Tk()
-canvas = tk.Canvas(root, height=400, width=400)
+canvas = tk.Canvas(root, height=300, width=800)
 canvas.grid(columnspan=3, rowspan=3)
 
-#class setup
+# Header
+header = tk.Label(root, text="ICT Thesis Classifier App Prototype", font="Raleway")
+header.grid(columnspan=3, column=0, row=0)
+
+
+# class setup
 class Reference():
-    def __init__(self, type, author, pubDate):
+    def __init__(self, type, author, pub_date):
         self.type = type
         self.author = author
-        self.pubDate = pubDate
+        self.pubDate = pub_date
 
 
-
-
-
-def getType(ref_list):
+def get_type(ref_list):
     for index in range(1, len(ref_list)):
         type = ref_list[index][0]
 
     return type
 
 
-def printType(type):
+def print_type(type):
     print(type)
-
-
-
 
 
 # Open Csv & extract entries
@@ -39,12 +37,16 @@ def open_csv_file():
     file = askopenfile(parent=root, mode="r", title="Choose a file", filetypes=[("Csv file", "*.csv")])
     reference_list = []
     if file:
+        text_box = tk.Text(root, height=10, width=60, padx=15, pady=15)
+        text_box.grid(column=1, row=4)
         reader = csv.reader(file)
         for row in reader:
             reference_list.append(row)
-        result = getType(reference_list)
-        print(reference_list)
-        printType(result)
+            text_box.insert(1.0, str(row) + '\n')
+        text_box.tag_configure("left", justify="left")
+        result = get_type(reference_list)
+        # print(reference_list)
+        print_type(result)
         return reference_list
 
 
@@ -53,26 +55,31 @@ def open_pdf_file():
     file = askopenfile(parent=root, mode="rb", title="Choose a file", filetypes=[("Pdf file", "*.pdf")])
     if file:
         read_pdf = PyPDF2.PdfFileReader(file)
-        page = read_pdf.getPage(2)
+        page = read_pdf.getPage(0)
         page_content = page.extractText()
-        print(page_content)
+        text_box = tk.Text(root, height=10, width=60, padx=15, pady=15)
+        text_box.grid(column=1, row=4)
+        text_box.insert(1.0, page_content)
+        text_box.tag_configure("left", justify="left")
 
 
 # CSV Button
 
 
 choose_csv_text = tk.StringVar()
-choose_csv_btn = tk.Button(root, textvariable=choose_csv_text, command=lambda: open_csv_file(), bg="blue", fg="white",
-                        height=2, width=15)
-choose_csv_text.set("Choose Csv")
+choose_csv_btn = tk.Button(root, textvariable=choose_csv_text, command=lambda: open_csv_file(), font="Raleway",
+                           bg="blue", fg="white",height=3, width=15)
+choose_csv_text.set("Csv File")
 choose_csv_btn.grid(column=2, row=2)
 
 # Pdf Button
 choose_pdf_text = tk.StringVar()
-choose_pdf_btn = tk.Button(root, textvariable=choose_pdf_text, command=lambda: open_pdf_file(), bg="red", fg="white",
-                        height=2, width=15)
-choose_pdf_text.set("Choose Pdf")
-choose_pdf_btn.grid(column=1, row=2)
+choose_pdf_btn = tk.Button(root, textvariable=choose_pdf_text, command=lambda: open_pdf_file(), font="Raleway",
+                           bg="red", fg="white",height=3, width=15)
+choose_pdf_text.set("Pdf File")
+choose_pdf_btn.grid(column=0, row=2)
 
+canvas = tk.Canvas(root, width=800, height=300)
+canvas.grid(columnspan=3, rowspan=3)
 
 root.mainloop()
