@@ -42,11 +42,11 @@ def open_csv_file():
         reader = csv.reader(file)
         for row in reader:
             reference_list.append(row)
-            text_box.insert(1.0, str(row) + '\n')
+            text_box.insert(tk.END, str(row) + '\n')
         text_box.tag_configure("left", justify="left")
         result = get_type(reference_list)
-        # print(reference_list)
-        print_type(result)
+        text_box.insert(tk.END, result + '\n')
+        # print_type(result)
         return reference_list
 
 
