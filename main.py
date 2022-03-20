@@ -38,7 +38,7 @@ def open_csv_file():
     reference_list = []
     if file:
         text_box = tk.Text(root, height=10, width=60, padx=15, pady=15)
-        text_box.grid(column=1, row=4)
+        text_box.grid(row=4, columnspan=3)
         reader = csv.reader(file)
         for row in reader:
             reference_list.append(row)
@@ -58,7 +58,7 @@ def open_pdf_file():
         page = read_pdf.getPage(0)
         page_content = page.extractText()
         text_box = tk.Text(root, height=10, width=60, padx=15, pady=15)
-        text_box.grid(column=1, row=4)
+        text_box.grid(row=4, columnspan=3)
         text_box.insert(1.0, page_content)
         text_box.tag_configure("left", justify="left")
 
