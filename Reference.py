@@ -30,6 +30,15 @@ if __name__ == "__main__":
     print(newReference.name)
     print(newReference.year_published)
 
+class ReferenceList:
+    def __init__(self):
+        self.allClasses = []
+
+    def construct(self, refinstance):
+        target_class = getattr(Reference, refinstance)
+        instance = target_class()
+        self.allClasses.append(instance)
+
 """
 # class setup
 class Reference:
