@@ -61,7 +61,7 @@ class ReferenceList:
         #self.references.append(instance)
 
 # for testing, only if file is run on it's own:
-if __name__ == "__main__":
+def local_testing():
     newReference = Reference(type= "shitpost", name= "Keyword arguments rule", year_published= 1337)
     print(newReference.type)
     print(newReference.name)
@@ -72,6 +72,9 @@ if __name__ == "__main__":
     ref_list.debug_printout()
     newReference.author = "anonymous"
     ref_list.debug_printout()
+
+if __name__ == "__main__":
+    local_testing()
 
 """
 # class setup
