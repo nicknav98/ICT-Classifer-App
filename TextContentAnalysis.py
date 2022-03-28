@@ -154,15 +154,18 @@ def find_word(word: str, container: TextContainer, get_whole_words: bool = True)
 
 """
 Finds links in "" -marks, starting with http, that:
-    - contain all of the required parts (substrings)
-    - do NOT contain any forbidden parts (substrings)
-and returns them in order from having most preferred parts (substrings)
+    - contain all of the required_substrings_all
+    - contain at least one of required_substrings_some
+        - does not prefer more over less
+    - do NOT contain any forbidden substrings
+and returns them in order from having most preferred substrings
 to least.
 """
-def find_links(container: TextContainer, \
-        required_name_parts: list = list(), \
-        preferred_name_parts: list = list(), \
-        forbidden_name_parts: list = list(), \
+def find_links(container: TextContainer,            \
+        required_substrings_all: list = list(),     \
+        required_substrings_some: list = list(),    \
+        preferred_substrings: list = list(),        \
+        forbidden_substrings: list = list(),   \
         max_links_returned = 1):
     links = list()
     substring_iterator = re.finditer("http", container.text, re.IGNORECASE)
@@ -173,9 +176,10 @@ def find_links(container: TextContainer, \
             while (container.text[searchindex] != '"') and (searchindex < container.text_string_length):
                 searchindex += 1
             link_string = container.text[wordspan[0]:searchindex]# one link as a string
-            if found_substring_ratio(link_string, required_name_parts) == 1\
-                    and found_substring_ratio(link_string, forbidden_name_parts) == 0:
-                link_rating = found_substring_ratio(link_string, preferred_name_parts)
+            if found_substring_ratio(link_string, required_substrings_all) == 1 \
+                    and found_substring_ratio(link_string, required_substrings_some) > 0 \
+                    and found_substring_ratio(link_string, forbidden_substrings) == 0:
+                link_rating = found_substring_ratio(link_string, preferred_substrings)
                 orderly_tuple_insert((container.text[wordspan[0]:searchindex], link_rating), links)
 
         except StopIteration:
@@ -188,15 +192,19 @@ def find_links(container: TextContainer, \
 
 """
 Returns a fraction of how many of the given substrings are present in the main string
+If substrings list is empty, returns 1
 """
 def found_substring_ratio(main_string: str, substrings: list):
-    found = 0
     all = len(substrings)
-    for s in substrings:
-        if type(s) == str:
-            if re.search(s, main_string, re.IGNORECASE):
-                found += 1
-    return found / all
+    if all == 0:
+        return 1
+    else:
+        found = 0
+        for s in substrings:
+            if type(s) == str:
+                if re.search(s, main_string, re.IGNORECASE):
+                    found += 1
+        return found / all
 
 
 def orderly_tuple_insert(new_tuple: tuple, t_list: list):

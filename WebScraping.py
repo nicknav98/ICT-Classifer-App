@@ -2,11 +2,12 @@ import requests as req
 import TextContentAnalysis as Analysis
 import re
 
-def get_source(ref_link: str, \
-        look_for_file_link: bool = False, \
-        required_link_parts: list = [], \
-        preferred_link_parts: list = [], \
-        forbidden_link_parts: list = []):
+def get_source(ref_link: str,                       \
+        look_for_file_link: bool = False,           \
+        required_substrings_all: list = [],         \
+        required_substrings_some: list = list(),    \
+        preferred_substrings: list = [],            \
+        forbidden_substrings: list = []):
     
     page: req.Response = req.get(ref_link)
 
@@ -14,7 +15,7 @@ def get_source(ref_link: str, \
         page.json()
         print("Response was a json script")
     except:
-        print("Response was NOT a json script")
+        print("Response was not a json script, likely http / https")
     
     content = page.text
     
@@ -22,7 +23,13 @@ def get_source(ref_link: str, \
     
     if look_for_file_link:
         print("Getting link...")
-        links = Analysis.find_links(content, required_link_parts, preferred_link_parts, forbidden_link_parts, 1)
+        links = Analysis.find_links(content, \
+            required_substrings_all, \
+            required_substrings_some, \
+            preferred_substrings, \
+            forbidden_substrings, \
+            1)
+        
         print("Trying link: ", links[0])
         get_source(links[0], look_for_file_link= False)
     
@@ -32,9 +39,10 @@ def get_source(ref_link: str, \
 def local_testing():
     test_container = get_source("https://www.theseus.fi/handle/10024/342934",\
         True, \
-        required_link_parts= [".pdf"], \
-        preferred_link_parts= ["Alhola", "Juho"], \
-        forbidden_link_parts= [".jpg", ".jpeg", ".png", ".webm"])   # ignore images
+        required_substrings_all= ["https"], \
+        required_substrings_some= [".pdf"], \
+        preferred_substrings= ["Alhola", "Juho"], \
+        forbidden_substrings= [".jpg", ".jpeg", ".png", ".webm"])   # ignore images
     # WARNING! This prints out A LOT.
     # Seems to get link to file, but doesn't seem to properly read it, 
     # need to handle it better.
