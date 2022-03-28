@@ -13,8 +13,12 @@ canvas.grid(columnspan=3, rowspan=3)
 header = tk.Label(root, text="ICT Thesis Classifier App Prototype", font="Raleway")
 header.grid(columnspan=3, column=0, row=0)
 
+reference_container = ReferenceList()
 
-firstReference = ReferenceList()
+#firstReference = ReferenceList()
+
+def reset_reference_list():
+    reference_container.references.clear()
 
 def get_one_ref(ref_list):
     for index in range(1, len(ref_list)):
@@ -22,26 +26,37 @@ def get_one_ref(ref_list):
 
     return type
 
+def csv_row_to_reference(row) -> Reference:
+    # bandaid solution, csv reader returns the first row as a list of 3, others as list of 1
+    if len(row) == 1:
+        row = str(row[0]).split(',')
+    return Reference(type= row[0], author= row[1], year_published= row[2])
 
 # Open Csv & extract entries
 def open_csv_file():
     file = askopenfile(parent=root, mode="r", title="Choose a file", filetypes=[("Csv file", "*.csv")])
-    reference_list = []
-    length = len(reference_list)
+    #reference_list = []
+    #length = len(reference_list)
 
     if file:
         text_box = tk.Text(root, height=10, width=60, padx=15, pady=15)
         text_box.grid(row=4, columnspan=3)
         reader = csv.reader(file)
         for row in reader:
-            reference_list.append(row)
+            reference_container.add_reference(csv_row_to_reference(row))
+            #reference_list.append(row)
             text_box.insert(tk.END, str(row) + '\n')
         text_box.tag_configure("left", justify="left")
-        result = get_one_ref(reference_list)
+        # change index to 0 in the following after implementing a way to ignore title row
+        result = reference_container.reference_string_at_index(1)
+        #result = get_one_ref(reference_list)
         text_box.insert(tk.END, 'The first reference is:' + result + '\n')
-        firstReference.construct(result)
+        #firstReference.construct(result)
 
-    return reference_list
+        # just for testing ReferenceList
+        reference_container.debug_printout()
+
+    #return reference_list
 
 
 # Open pdf & extract text
@@ -81,5 +96,5 @@ choose_pdf_btn.grid(column=0, row=2)
 canvas = tk.Canvas(root, width=800, height=300)
 canvas.grid(columnspan=3, rowspan=3)
 
-print(firstReference.allClasses)
+#print(firstReference.reference_list)
 root.mainloop()

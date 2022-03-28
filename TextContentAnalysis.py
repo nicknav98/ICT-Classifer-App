@@ -139,8 +139,6 @@ form of tuple that indicates the line and the position of the first letter on th
 """
 def find_word(word: str, container: TextContainer, get_whole_words: bool = True) -> dict:
     found_words = dict()
-    #words = list()
-    #substringStartPoints = []#self._find_all_substrings(text_container, word)
     substring_iterator = re.finditer(word, container.text, re.IGNORECASE)
     while True:
         try:
@@ -154,10 +152,70 @@ def find_word(word: str, container: TextContainer, get_whole_words: bool = True)
             break
     return found_words
 
+"""
+Finds links in "" -marks, starting with http, that:
+    - contain all of the required_substrings_all
+    - contain at least one of required_substrings_some
+        - does not prefer more over less
+    - do NOT contain any forbidden substrings
+and returns them in order from having most preferred substrings
+to least.
+"""
+def find_links(container: TextContainer,            \
+        required_substrings_all: list = list(),     \
+        required_substrings_some: list = list(),    \
+        preferred_substrings: list = list(),        \
+        forbidden_substrings: list = list(),   \
+        max_links_returned = 1):
+    links = list()
+    substring_iterator = re.finditer("http", container.text, re.IGNORECASE)
+    while True:
+        try:
+            wordspan = next(substring_iterator).span()
+            searchindex = wordspan[1]
+            while (container.text[searchindex] != '"') and (searchindex < container.text_string_length):
+                searchindex += 1
+            link_string = container.text[wordspan[0]:searchindex]# one link as a string
+            if found_substring_ratio(link_string, required_substrings_all) == 1 \
+                    and found_substring_ratio(link_string, required_substrings_some) > 0 \
+                    and found_substring_ratio(link_string, forbidden_substrings) == 0:
+                link_rating = found_substring_ratio(link_string, preferred_substrings)
+                orderly_tuple_insert((container.text[wordspan[0]:searchindex], link_rating), links)
+
+        except StopIteration:
+            break
+    
+    links = links[0:max_links_returned]
+    for i in range(len(links)):
+        links[i] = links[i][0]
+    return links
+
+"""
+Returns a fraction of how many of the given substrings are present in the main string
+If substrings list is empty, returns 1
+"""
+def found_substring_ratio(main_string: str, substrings: list):
+    all = len(substrings)
+    if all == 0:
+        return 1
+    else:
+        found = 0
+        for s in substrings:
+            if type(s) == str:
+                if re.search(s, main_string, re.IGNORECASE):
+                    found += 1
+        return found / all
 
 
-#Testing goes here:
-if __name__ == "__main__":
+def orderly_tuple_insert(new_tuple: tuple, t_list: list):
+    for i in range(len(t_list)):
+        if t_list[i][1] < new_tuple[1]:
+            t_list.insert(i, new_tuple)
+            return
+    # this is executed ONLY if no other slot is acceptable:
+    t_list.insert(len(t_list), new_tuple)
+
+def local_testing():
     testContainer = TextContainer("--")
     # text can be changed, which resets other attributes
     testContainer.text = "The first line of text\nis followed by another,\nand yet another after that."
@@ -166,3 +224,7 @@ if __name__ == "__main__":
         word_position_at_index = testContainer.get_line_and_char_index(index)
         print("Index\t", index, "\tis a letter ", testContainer.text[index], "\tand corresponds to line", \
             word_position_at_index[0], " and word", word_position_at_index[1])
+
+#Testing goes here:
+if __name__ == "__main__":
+    local_testing()
