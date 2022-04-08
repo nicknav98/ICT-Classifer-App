@@ -1,52 +1,38 @@
-import requests as req
+from enum import Enum
+import requests
 import TextContentAnalysis as Analysis
 import re
+import PyPDF2
+import io
+from bs4 import BeautifulSoup
 
-def get_source(ref_link: str,                       \
-        look_for_file_link: bool = False,           \
-        required_substrings_all: list = [],         \
-        required_substrings_some: list = list(),    \
-        preferred_substrings: list = [],            \
-        forbidden_substrings: list = []):
-    
-    page: req.Response = req.get(ref_link)
+"""
+"""
+class SourceType(Enum):
+    WEBSITE = 0
+    PDF = 1
 
-    try:
-        page.json()
-        print("Response was a json script")
-    except:
-        print("Response was not a json script, likely http / https")
-    
-    content = page.text
-    
-    content = Analysis.TextContainer(content)
-    
-    if look_for_file_link:
-        print("Getting link...")
-        links = Analysis.find_links(content, \
-            required_substrings_all, \
-            required_substrings_some, \
-            preferred_substrings, \
-            forbidden_substrings, \
-            1)
-        
-        print("Trying link: ", links[0])
-        get_source(links[0], look_for_file_link= False)
-    
-    return content
-    
 
 def local_testing():
-    test_container = get_source("https://www.theseus.fi/handle/10024/342934",\
-        True, \
-        required_substrings_all= ["https"], \
-        required_substrings_some= [".pdf"], \
-        preferred_substrings= ["Alhola", "Juho"], \
-        forbidden_substrings= [".jpg", ".jpeg", ".png", ".webm"])   # ignore images
-    # WARNING! This prints out A LOT.
-    # Seems to get link to file, but doesn't seem to properly read it, 
-    # need to handle it better.
-    print(test_container.text)
+    resp = requests.get("https://en.wikipedia.org/wiki/Main_Page")
+    #TODO:
+    # 1. get response html
+    # 2. extract visible text
+    # 3. save as TextContainer
+    """
+    # remote pdf testing:
+    resp = \
+        requests.get("https://www.theseus.fi/bitstream/handle/10024/342934/Alhola_Juho.pdf?sequence=2&isAllowed=y")
+    pdf_bytes = io.BytesIO(resp.content)
+    pdf_reader = PyPDF2.PdfFileReader(pdf_bytes)
+    for i in range(pdf_reader.getNumPages()):
+        print(pdf_reader.getPage(i).extractText())
+        usr_input = input("Continue? (- / n)")
+        if usr_input.lower() == "n":
+            break
+        else:
+            continue
+    """
 
 if __name__ == "__main__":
     local_testing()

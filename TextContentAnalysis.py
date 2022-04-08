@@ -1,25 +1,37 @@
 import string
 import re
+import requests
 
 """
 Storing a string inside an object allows it to be passed by reference, 
-instead of copying the string
+instead of copying the string. Can store response object instead, 
+in which case there is no separate string and text property returns
+response object's text property.
 """
 class TextContainer:
-    def __init__(self, text: str) -> None:
-        self.__text = text
-        self.__text_string_length = len(self.__text)
+    def __init__(self, text: str, response_object: requests.Response = None) -> None:
+        self.__text = text if response_object == None else None
+        self.__response_object = response_object
+        self.__text_string_length = len(self.__text) if self.__text else len(response_object.text)
         self.__line_breaks_list: list = self.__get_newline_chars_indices()
         self.__line_breaks_count = len(self.__line_breaks_list)
     
     @property
     def text(self):
-        return self.__text
+        return self.__text if self.__text else self.__response_object.text
     
     @text.setter
     def text(self, value):
         #reset:
-        self.__init__(value)
+        self.__init__(text= value)
+    
+    @property
+    def response_object(self):
+        return self.__response_object
+    
+    @response_object.setter
+    def response_object(self, value):
+        self.__init__(text= None, response_object= value)
 
     @property
     def text_string_length(self):
@@ -38,7 +50,10 @@ class TextContainer:
     """
     def __get_newline_chars_indices(self) -> list:
         newlines = list()
-        substring_iterator = re.finditer("\n", self.__text)
+        if self.__response_object:
+            substring_iterator = re.finditer("\n", self.__response_object.text)
+        else:
+            substring_iterator = re.finditer("\n", self.__text)
         while True:
             try:
                 position = next(substring_iterator).span()
@@ -67,7 +82,7 @@ class TextContainer:
             else:
                 start_index = self.__line_breaks_list[previous_break_index]
 
-            snippet = self.__text[start_index: index + 1]
+            snippet = self.text[start_index: index + 1]
             #print("snippet is: ", snippet)
             words = snippet.split()
             #print("words on the line are: ", words)
@@ -76,6 +91,12 @@ class TextContainer:
             return (l + 1, w)
         else:
             return (-1,-1)
+    
+    """
+    Returns the index of the word that starts on given character index
+    """
+    def get_word_index(self, index: int):
+        pass
 
 
 """
@@ -224,6 +245,9 @@ def local_testing():
         word_position_at_index = testContainer.get_line_and_char_index(index)
         print("Index\t", index, "\tis a letter ", testContainer.text[index], "\tand corresponds to line", \
             word_position_at_index[0], " and word", word_position_at_index[1])
+    testContainer.response_object = requests.get("https://www.theseus.fi/handle/10024/342934")
+    print("===")
+    print(testContainer.text)
 
 #Testing goes here:
 if __name__ == "__main__":

@@ -1,15 +1,9 @@
-# alternative implementation(s):
 """
-Reference is an alternative to Reference
-    - use keyword arguments when creating instances / objects:
-    newReference = Reference(type= "shitpost", name= "Keyword arguments rule", year_published= 1337)
+Use keyword arguments when creating instances / objects:
+newReference = Reference(type= "shitpost", name= "Keyword arguments rule", year_published= 1337)
 
-    NOTE: Any of the arguments can be left out
+NOTE: Any of the arguments can be left out
 """
-
-
-from unicodedata import name
-
 
 class Reference:
     # \ allows splitting an expression between multiple rows:
