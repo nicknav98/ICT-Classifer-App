@@ -13,12 +13,15 @@ class SourceType(Enum):
     PDF = 1
 
 
+#TODO:
+# 1. extract visible text / save a section of visible text as a string
+# 2. print visible text string
 def local_testing():
     resp = requests.get("https://en.wikipedia.org/wiki/Main_Page")
-    #TODO:
-    # 1. get response html
-    # 2. extract visible text
-    # 3. save as TextContainer
+    html_text = resp.text
+    print(html_text)
+
+
     """
     # remote pdf testing:
     resp = \
