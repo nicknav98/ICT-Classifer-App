@@ -395,6 +395,50 @@ class TextContainer:
             links[i] = links[i][0]
         return links
 
+
+"""
+Returns individual numbers found in a string. Can start and/or end at specified indices 
+and limit the number of numbers searched for. Returns either list of tuples denoting character 
+spans (like with words), or optionally a dictionary of span tuples and numbers themselves.
+NOTE: Numbers are returned as strings to preserve exact way they are typed in text.
+"""
+def find_number_spans_in_text(text: str, 
+        decimal_delimeter: str = ',',
+        start_index: int = 0, 
+        end_index: int = -1, 
+        max_numbers_returned: int = 0, 
+        as_dictionary: bool = False
+        ) -> list:
+    
+    list_of_numbers = list()
+    dict_of_numbers = dict()
+    substring_iterator = re.finditer(
+        "-{0,1}[0-9]{1,}" + 
+        decimal_delimeter + 
+        "{0,1}[0-9]{0,}", 
+        text[start_index: end_index if (end_index > 0) else len(text)]
+        )
+    
+    numbers_found = 0
+    while (max_numbers_returned < 1) or (numbers_found < max_numbers_returned):
+        try:
+            span = next(substring_iterator).span()
+            if as_dictionary:
+                dict_of_numbers[span] = text[span[0]:span[1]]
+            else:
+                list_of_numbers.append(span)
+            
+            numbers_found += 1
+
+        except StopIteration:
+            break
+    
+    if as_dictionary:
+        return dict_of_numbers
+    else:
+        return list_of_numbers
+
+
 """
 Returns a fraction of how many of the given substrings are present in the main string
 If substrings list is empty, returns 1
@@ -434,6 +478,19 @@ Use this for local testing of module's functions:
 2. Run the script by itself
 """
 def local_testing():
+    # finding numbers:
+
+    test_text = "1234 sfdg 1234 awe3ws8eyhg8qwgdse 24q3"
+    list_of_numbers = find_number_spans_in_text(test_text)
+    print(list_of_numbers)
+    list_of_numbers = find_number_spans_in_text(test_text, max_numbers_returned= 3)
+    print(list_of_numbers)
+    list_of_numbers = find_number_spans_in_text(test_text, start_index= len(test_text) // 2)
+    print(list_of_numbers)
+    print("dictionary:")
+    list_of_numbers = find_number_spans_in_text(test_text, as_dictionary= True)
+    print(list_of_numbers)
+
     # finding words:
     """
     test_text = "To address the uncertainty of data parameters including those\n" +\
