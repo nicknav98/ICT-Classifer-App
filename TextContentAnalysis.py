@@ -401,28 +401,70 @@ Returns individual numbers found in a string. Can start and/or end at specified 
 and limit the number of numbers searched for. Returns either list of tuples denoting character 
 spans (like with words), or optionally a dictionary of span tuples and numbers themselves.
 NOTE: Numbers are returned as strings to preserve exact way they are typed in text.
+    accepted_number_types
+         = 0: all
+         < 0: whole numbers
+         > 0: non-whole numbers
+    accepted_signs
+         = 0: all
+         < 0: negative
+         > 0: positive
 """
 def find_number_spans_in_text(text: str, 
         decimal_delimeter: str = ',',
         start_index: int = 0, 
         end_index: int = -1, 
         max_numbers_returned: int = 0, 
-        as_dictionary: bool = False
+        as_dictionary: bool = False,
+        accepted_number_types: int = 0,
+        accepted_signs: int = 0
         ) -> list:
     
+    text = text[start_index: (end_index if (end_index > 0) else len(text))]
+
     list_of_numbers = list()
     dict_of_numbers = dict()
+
+    """     THIS CAN INCLUDE SEVERAL DELIMETERS IN A MATCH:
+    substring_iterator = re.finditer("-{0,1}[0123456789,]{1,}", text)
+    """
+
     substring_iterator = re.finditer(
         "-{0,1}[0-9]{1,}" + 
         decimal_delimeter + 
         "{0,1}[0-9]{0,}", 
-        text[start_index: end_index if (end_index > 0) else len(text)]
+        text
         )
-    
+
     numbers_found = 0
     while (max_numbers_returned < 1) or (numbers_found < max_numbers_returned):
         try:
             span = next(substring_iterator).span()
+            
+            # check for and trim matches that end with a delimeter:
+            if text[span[1] - 1] == decimal_delimeter:
+                span = (span[0], span[1] - 1)
+
+            # filter results:
+
+            # if only whole numbers are accepted, skip non-whole numbers
+            if (accepted_number_types < 0) and (decimal_delimeter in text[span[0]:span[1]]):
+                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                continue
+            # if only non-whole numbers are accepted, skip whole numbers
+            elif (accepted_number_types > 0) and not (decimal_delimeter in text[span[0]:span[1]]):
+                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                continue
+            
+            # if only negative numbers are accepted, ignore positive numbers
+            if (accepted_signs < 0) and not ('-' in text[span[0]:span[1]]):
+                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                continue
+            # if only positive numbers are accepted, ignore negative numbers
+            elif (accepted_signs > 0) and ('-' in text[span[0]:span[1]]):
+                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                continue
+
             if as_dictionary:
                 dict_of_numbers[span] = text[span[0]:span[1]]
             else:
@@ -478,18 +520,23 @@ Use this for local testing of module's functions:
 2. Run the script by itself
 """
 def local_testing():
+    # reference strings:
+    ref_text = "Directive (EU) 2015/1535 of the European Parliament and of the Council of 9 September 2015 laying down a procedure for the provision of information in the field of technical regulations and of rules on Information Society services (codification). Available at: https://eur-lex.europa.eu/legal-content/FI/TXT/?uri=CELEX:32015L1535. Accessed: May 10, 2020."
+    dict_of_numbers = find_number_spans_in_text(ref_text, as_dictionary= True, accepted_number_types= -1, accepted_signs= 1)
+    print(dict_of_numbers)
     # finding numbers:
-
-    test_text = "1234 sfdg 1234 awe3ws8eyhg8qwgdse 24q3"
+    """
+    test_text = "1234 sfdg -1234 awe3ws8eyhg8qwgdse 24q3 13,534 3wrho734hes,00"
     list_of_numbers = find_number_spans_in_text(test_text)
     print(list_of_numbers)
     list_of_numbers = find_number_spans_in_text(test_text, max_numbers_returned= 3)
     print(list_of_numbers)
-    list_of_numbers = find_number_spans_in_text(test_text, start_index= len(test_text) // 2)
+    list_of_numbers = find_number_spans_in_text(test_text, start_index= len(test_text) // 2, accepted_number_types= 1)
     print(list_of_numbers)
     print("dictionary:")
-    list_of_numbers = find_number_spans_in_text(test_text, as_dictionary= True)
+    list_of_numbers = find_number_spans_in_text(test_text, as_dictionary= True, accepted_signs= -1)
     print(list_of_numbers)
+    """
 
     # finding words:
     """
