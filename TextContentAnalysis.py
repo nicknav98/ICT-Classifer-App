@@ -244,7 +244,6 @@ class TextContainer:
 
 
     """
-    TODO: made this part of the class, TEST!!
     Checks if the given index in the given TextContainer's text is a dash and 
     next to a newline character. Use in checking if a word was split between lines.
     """
@@ -259,7 +258,6 @@ class TextContainer:
         return False
 
     """
-    TODO: made this part of the class, TEST!!
     Returns a tuple that represents the larger word that contains
     he given subsection of the text as denoted by given tuple.
     By default returns the whole word, but can ignore:
@@ -311,7 +309,6 @@ class TextContainer:
         return (start_index, stop_index)
 
     """
-    TODO: made this part of the class, TEST!!
     Returns the span of the whole sentence around the specified index as a tuple
     denoting start and end indices.
     ISSUES:
@@ -366,7 +363,7 @@ class TextContainer:
     and returns them in order from having most preferred substrings
     to least.
     """
-    def find_links(self,            \
+    def find_links_in_html(self,            \
             required_substrings_all: list = list(),     \
             required_substrings_some: list = list(),    \
             preferred_substrings: list = list(),        \
@@ -425,10 +422,6 @@ def find_number_spans_in_text(text: str,
     list_of_numbers = list()
     dict_of_numbers = dict()
 
-    """     THIS CAN INCLUDE SEVERAL DELIMETERS IN A MATCH:
-    substring_iterator = re.finditer("-{0,1}[0123456789,]{1,}", text)
-    """
-
     substring_iterator = re.finditer(
         "-{0,1}[0-9]{1,}" + 
         decimal_delimeter + 
@@ -449,20 +442,20 @@ def find_number_spans_in_text(text: str,
 
             # if only whole numbers are accepted, skip non-whole numbers
             if (accepted_number_types < 0) and (decimal_delimeter in text[span[0]:span[1]]):
-                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                #print("skipped: ", text[span[0]:span[1]], " at: ", span)
                 continue
             # if only non-whole numbers are accepted, skip whole numbers
             elif (accepted_number_types > 0) and not (decimal_delimeter in text[span[0]:span[1]]):
-                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                #print("skipped: ", text[span[0]:span[1]], " at: ", span)
                 continue
             
             # if only negative numbers are accepted, ignore positive numbers
             if (accepted_signs < 0) and not ('-' in text[span[0]:span[1]]):
-                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                #print("skipped: ", text[span[0]:span[1]], " at: ", span)
                 continue
             # if only positive numbers are accepted, ignore negative numbers
             elif (accepted_signs > 0) and ('-' in text[span[0]:span[1]]):
-                print("skipped: ", text[span[0]:span[1]], " at: ", span)
+                #print("skipped: ", text[span[0]:span[1]], " at: ", span)
                 continue
 
             if as_dictionary:
@@ -504,6 +497,8 @@ def found_substring_ratio(main_string: str, substrings: list, ignore_case: bool 
 """
 Inserts a tuple into a list of tuples based on the second value.
 This a utility function for other functions in this module.
+For example: make a list and add tuples made of main value and a rank,
+then clean up the list by replacing each tuple with just the main value.
 """
 def orderly_tuple_insert(new_tuple: tuple, t_list: list):
     for i in range(len(t_list)):
@@ -520,12 +515,8 @@ Use this for local testing of module's functions:
 2. Run the script by itself
 """
 def local_testing():
-    # reference strings:
-    ref_text = "Directive (EU) 2015/1535 of the European Parliament and of the Council of 9 September 2015 laying down a procedure for the provision of information in the field of technical regulations and of rules on Information Society services (codification). Available at: https://eur-lex.europa.eu/legal-content/FI/TXT/?uri=CELEX:32015L1535. Accessed: May 10, 2020."
-    dict_of_numbers = find_number_spans_in_text(ref_text, as_dictionary= True, accepted_number_types= -1, accepted_signs= 1)
-    print(dict_of_numbers)
     # finding numbers:
-    """
+    
     test_text = "1234 sfdg -1234 awe3ws8eyhg8qwgdse 24q3 13,534 3wrho734hes,00"
     list_of_numbers = find_number_spans_in_text(test_text)
     print(list_of_numbers)
@@ -536,7 +527,7 @@ def local_testing():
     print("dictionary:")
     list_of_numbers = find_number_spans_in_text(test_text, as_dictionary= True, accepted_signs= -1)
     print(list_of_numbers)
-    """
+    
 
     # finding words:
     """
