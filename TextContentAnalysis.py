@@ -2,30 +2,32 @@ import string
 import re
 import requests
 
-"""
-Characters between words in html code text
-"""
-html_non_word_chars = string.whitespace + "<=>[/]{*}.,;:" + '"'
+
 
 """
+A class for storing and analyzing a string of text.
 Storing a string inside an object allows it to be passed by reference, 
 instead of copying the string. Can store response object instead, 
 in which case there is no separate string and text property returns
-response object's text property
+response object's text property.
+If both text string and response object is given to constructor, the text string is ignored
 """
 class TextContainer:
-    def __init__(self, text: str, response_object: requests.Response = None, index_words = False) -> None:
+
+    # Characters between words, including in html code text
+    non_word_chars = string.whitespace + "<=>[/\\]{*}.,;:" + '"'
+    
+    def __init__(self, text: str, response_object: requests.Response = None, index_words: bool = False) -> None:
         self.__text = text if response_object == None else None
         self.__response_object = response_object
         self.__text_string_length = len(self.__text) if self.__text else len(response_object.text)
-        self.__line_breaks_list: list = self.__get_newline_chars_indices()
-        self.__line_breaks_count = len(self.__line_breaks_list)
         self.__word_start_indices = list()
         self.__word_count = None
         if index_words:
             self.index_text_words()
 
-    
+    # using properties makes sure that changing certain
+    # variables affects related their variables as well
     @property
     def text(self):
         return self.__text if self.__text else self.__response_object.text
@@ -33,7 +35,7 @@ class TextContainer:
     @text.setter
     def text(self, value):
         #reset:
-        self.__init__(text= value)
+        self.__init__(text= value, index_words= (self.__word_count != None))
     
     @property
     def response_object(self):
@@ -41,53 +43,35 @@ class TextContainer:
     
     @response_object.setter
     def response_object(self, value):
-        self.__init__(text= None, response_object= value)
+        self.__init__(text= None, response_object= value, index_words= (self.__word_count != None))
 
     @property
     def text_string_length(self):
         return self.__text_string_length
     
     @property
-    def line_breaks_list(self):
-        return self.__line_breaks_list
-    
-    @property
-    def line_breaks_count(self):
-        return self.__line_breaks_count
-    
-    @property
-    def word_indices(self):
+    def word_start_indices(self):
         return self.__word_start_indices
 
     @property
     def word_count(self):
         return self.__word_count
 
-    """
-    <OBSOLETE>
-    finds all line breaks
-    """
-    def __get_newline_chars_indices(self) -> list:
-        newlines = list()
-        if self.__response_object:
-            substring_iterator = re.finditer("\n", self.__response_object.text)
-        else:
-            substring_iterator = re.finditer("\n", self.__text)
-        while True:
-            try:
-                position = next(substring_iterator).span()
-                newlines.append(position[0])
-            except StopIteration:
-                break
-        return newlines
 
     """
     Searches for all occurences of a given string in the TextContainer's text
     and returns found words and their positions in the text, as a list or a dictionary with
-    of positions. Positions are represented by a tuple that consists of:
+    of positions. Positions are represented by tuples that consist of:
     - index of the first character
     - index after the last character
-    e.g. word_string = text_container.text[span[0]:span[1]], where:
+
+    Such tuples can also be used to easily get words as string from the whole text,
+    *as long as the string has not been modified* (= replaced, as string are immutable)
+    
+    TODO: Currently does not detect words / substrings that are split between lines.
+        This is an unlikely scenario, but it may be worth considering.
+    
+    For example, word_string = text_container.text[span[0]:span[1]], where:
     - 'text_container' is a TextContainer object
     - 'span' is a single tuple representing word position
         'word_string' would be assigned the word as a string
@@ -95,7 +79,8 @@ class TextContainer:
     def find_word(self, word: str,
             as_dictionary: bool = False,
             all_partial_matches: bool = False,  # returns all substring matches if true
-            word_affix_char: str = '*'):
+            word_affix_char: str = '*',
+            return_word_indices: bool = False):
 
         found_words_dict = dict()
         found_words_list = list()
@@ -112,16 +97,27 @@ class TextContainer:
         while True:
             try:
                 match_span = next(substring_iterator).span()
-                match_span = self.get_word_span(match_span, include_prefix= check_prefix, include_suffix= check_suffix)
+                match_span = self.get_word_span(match_span, 
+                    include_prefix= (check_prefix), 
+                    include_suffix= (check_suffix)
+                    )
                 wordspan = self.get_word_span(match_span)
 
                 # how to return only proper matches
-                if ((match_span[0] == wordspan[0]) and (match_span[1] == wordspan[1])) or all_partial_matches:
-                    word_position = self.get_word_index(match_span[0])
-                    if as_dictionary:
-                        found_words_dict[word_position] = self.text[wordspan[0]:wordspan[1]]
+                if (match_span == wordspan) or all_partial_matches:
+                    
+                    if return_word_indices:
+                        word_position = self.get_word_index(match_span[0])
+                        if as_dictionary:
+                            found_words_dict[word_position] = self.text[wordspan[0]:wordspan[1]]
+                        else:
+                            found_words_list.append(word_position)
+                    
                     else:
-                        found_words_list.append(self.text[wordspan[0]:wordspan[1]])
+                        if as_dictionary:
+                            found_words_dict[match_span] = self.text[wordspan[0]:wordspan[1]]
+                        else:
+                            found_words_list.append(match_span)
 
             except StopIteration:
                 break
@@ -133,31 +129,32 @@ class TextContainer:
 
     """
     FOR OPTIONAL LIST PROPERTY, DO NOT USE IF MEMORY IS LIMITED!
-    finds starting index for each word in the string
-    -> use this to help quickly calculating the ordinal number
-    of a word based on the index of it's first letter
+    Finds starting index for each word in the string.
+    Use this to help the "get_word_index" function quickly calculating
+    the ordinal number of a word based on the index of it's first letter.
     """
     def index_text_words(self):
         self.__word_count = 0
         looking_for_word_start = True
         for i in range(self.__text_string_length):
             if looking_for_word_start:
-                if (not (self.text[i] in html_non_word_chars)) and (self.text[i] in string.printable):
+                if (not (self.text[i] in TextContainer.non_word_chars)) and (self.text[i] in string.printable):
                     self.__word_start_indices.append(int(i))
                     self.__word_count += 1
                     looking_for_word_start = False
-            elif self.text[i] in html_non_word_chars:
+            elif self.text[i] in TextContainer.non_word_chars:
                 looking_for_word_start = True
 
     
     """
-    Returns the index of the word that starts on given character index
-    TODO: implement a *good* search algorithm
+    Returns the index of the word that starts on given character index in a string
+    For example: character at index 5 in string "This is a sentence" is part of word 2
     """
-    def get_word_index(self, index: int):
+    def get_word_index(self, character_index: int):
+        # TODO: implement a *good* search algorithm when using known word start indices
         if len(self.__word_start_indices) > 0:
             for i in range(self.__word_count):
-                if index < self.__word_start_indices[i]:
+                if character_index < self.__word_start_indices[i]:
                     if i == 0:
                         return self.__word_start_indices[0]
                     else:
@@ -167,12 +164,12 @@ class TextContainer:
         else:
             word_count = 0
             looking_for_word_start = True
-            for i in range(index + 1):
+            for i in range(character_index + 1):
                 if looking_for_word_start:
-                    if (not (self.text[i] in html_non_word_chars)) and (self.text[i] in string.printable):
+                    if (not (self.text[i] in TextContainer.non_word_chars)) and (self.text[i] in string.printable):
                         word_count += 1
                         looking_for_word_start = False
-                elif self.text[i] in html_non_word_chars:
+                elif self.text[i] in TextContainer.non_word_chars:
                     looking_for_word_start = True
             return word_count
 
@@ -186,13 +183,13 @@ class TextContainer:
     and returns them in order from having most preferred substrings
     to least.
     """
-    def find_sentences_with_words(self,            \
-            must_contain_all: list = list(),     \
-            must_contain_some: list = list(),    \
-            better_if_has_more: list = list(),        \
-            cannot_contain_any: list = list(),   \
-            prioritize_by_must_contain_some: bool = True,    \
-            ignore_case: bool = True,   \
+    def find_sentences_with_words(self,
+            must_contain_all: list = list(),
+            must_contain_some: list = list(),
+            better_if_has_more: list = list(),
+            cannot_contain_any: list = list(),
+            prioritize_by_must_contain_some: bool = True,
+            ignore_case: bool = True,
             max_sentences_returned = 0):
         
         # find all occurences of first word
@@ -284,7 +281,7 @@ class TextContainer:
         # iterate backwards
         if include_prefix:
             while search_index > -1:
-                if self.text[search_index] in html_non_word_chars:
+                if self.text[search_index] in TextContainer.non_word_chars:
                     if not self.is_newline_with_dash(search_index):
                         start_index = search_index + 1
                         break
@@ -297,7 +294,7 @@ class TextContainer:
         if include_suffix:
             search_index = stop_index - 1
             while search_index < len(self.text):
-                if self.text[search_index] in html_non_word_chars:
+                if self.text[search_index] in TextContainer.non_word_chars:
                     if not self.is_newline_with_dash(search_index):
                         stop_index = search_index
                         break
@@ -311,9 +308,11 @@ class TextContainer:
     """
     Returns the span of the whole sentence around the specified index as a tuple
     denoting start and end indices.
-    ISSUES:
-    - a "sentence" can start after index, if the index is the whitespace after the period
-        - this should not be a problem if index of a found word is used
+    ISSUE(S) FOUND:
+        If the index is the whitespace after a period, the function returns the sentence 
+        after the given index, or if there are only whitespaces after the given index, it 
+        returns the resto of the string after that index. 
+            This should not be a problem if index of a found word is used.
     """
     def get_whole_sentence(self, index: int) -> tuple:
         if index < 0:
@@ -325,36 +324,37 @@ class TextContainer:
         stop_index = index
 
         # iterate backwards
-        search_index: int = start_index
-        if self.text[search_index] == '.':
-            search_index -= 1
-        while search_index > -1:
-            if self.text[search_index] == '.':
-                start_index = search_index + 1
+        if self.text[start_index] == '.':
+            start_index -= 1
+        while start_index > -1:
+            if self.text[start_index] == '.':
+                start_index = start_index + 1
                 if self.text[start_index] in string.whitespace:
                     start_index += 1
                 break
             #ELSE:
-            search_index -= 1
-        if search_index < 0:
+            start_index -= 1
+        
+        if start_index < 0:
             start_index = 0
         if start_index >= self.text_string_length:
             start_index = self.text_string_length - 1
-
+        
         # iterate forward
-        search_index = stop_index
-        while search_index < len(self.text):
-            if self.text[search_index] == '.':
-                stop_index = search_index + 1
+        while stop_index < len(self.text):
+            if self.text[stop_index] == '.':
+                stop_index += 1
                 break
             #ELSE:
-            search_index += 1
-        if search_index > len(self.text):
+            stop_index += 1
+
+        if stop_index > len(self.text):
             stop_index = len(self.text)
         return (start_index, stop_index)
 
 
     """
+    TODO: rework logic to match sentence search
     Finds links in "" -marks, starting with http, that:
         - contain all of the required_substrings_all
         - contain at least one of required_substrings_some
@@ -363,11 +363,11 @@ class TextContainer:
     and returns them in order from having most preferred substrings
     to least.
     """
-    def find_links_in_html(self,            \
-            required_substrings_all: list = list(),     \
-            required_substrings_some: list = list(),    \
-            preferred_substrings: list = list(),        \
-            forbidden_substrings: list = list(),   \
+    def find_links_in_html(self,
+            required_substrings_all: list = list(),
+            required_substrings_some: list = list(),
+            preferred_substrings: list = list(),
+            forbidden_substrings: list = list(),
             max_links_returned = 1):
         links = list()
         substring_iterator = re.finditer("http", self.text, re.IGNORECASE)
@@ -476,6 +476,7 @@ def find_number_spans_in_text(text: str,
 
 """
 Returns a fraction of how many of the given substrings are present in the main string
+NOTE: Does NOT count the number of times a substring occurs, only whether it does or not.
 If substrings list is empty, returns 1
 """
 def found_substring_ratio(main_string: str, substrings: list, ignore_case: bool = True):
@@ -497,8 +498,10 @@ def found_substring_ratio(main_string: str, substrings: list, ignore_case: bool 
 """
 Inserts a tuple into a list of tuples based on the second value.
 This a utility function for other functions in this module.
-For example: make a list and add tuples made of main value and a rank,
-then clean up the list by replacing each tuple with just the main value.
+For example: make a list and add tuples made of primary data as the first value 
+and a rank as the second value, then clean up the list by replacing each tuple 
+with just the primary data.
+NOTE: some of the other functions depend on this, so be careful about changing it!
 """
 def orderly_tuple_insert(new_tuple: tuple, t_list: list):
     for i in range(len(t_list)):
@@ -513,10 +516,11 @@ def orderly_tuple_insert(new_tuple: tuple, t_list: list):
 Use this for local testing of module's functions:
 1. Write content of your choosing in local_testing -function
 2. Run the script by itself
+test_text string is an excerpt from a larger text, but i can't remember where i got it :/
 """
 def local_testing():
     # finding numbers:
-    
+    """
     test_text = "1234 sfdg -1234 awe3ws8eyhg8qwgdse 24q3 13,534 3wrho734hes,00"
     list_of_numbers = find_number_spans_in_text(test_text)
     print(list_of_numbers)
@@ -527,10 +531,10 @@ def local_testing():
     print("dictionary:")
     list_of_numbers = find_number_spans_in_text(test_text, as_dictionary= True, accepted_signs= -1)
     print(list_of_numbers)
-    
+    """
 
     # finding words:
-    """
+    #"""
     test_text = "To address the uncertainty of data parameters including those\n" +\
         "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
         "zation model is developed to estimate the arbitrage proﬁt of PHEV\n" +\
@@ -542,15 +546,25 @@ def local_testing():
         "not participate in arbitrage. The cost in this case consists of only\n" +\
         "charging cost and degradation cost from PHEV driving."
     testContainer = TextContainer(test_text)
-    words_to_find = ["case", "The", "base*"]
+    words_to_find = ["case", "The", "base*", "is"]
     for word in words_to_find:
-        w_list = testContainer.find_word(word)
+        #w_list = testContainer.find_word(word)
         w_dict = testContainer.find_word(word, as_dictionary= True)
-        print(w_list)
+        #print(w_list)
         print(w_dict)
-    """
+    print(" -- -- ")
+    # all partial matches, get word indices instead:
+    words_to_find = ["case", "The", "base*", "is"]
+    for word in words_to_find:
+        #w_list = testContainer.find_word(word)
+        w_dict = testContainer.find_word(word, as_dictionary= True, 
+            all_partial_matches= True, 
+            return_word_indices= True)
+        #print(w_list)
+        print(w_dict)
+    #"""
 
-    # getting whole sentence:
+    # getting whole sentences:
     """
     test_text = "To address the uncertainty of data parameters including those\n" +\
         "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
@@ -561,10 +575,10 @@ def local_testing():
         "is the sum of charging cost and battery degradation cost, minuses\n" +\
         "the revenue from V2G discharging. In the baseline case, PHEV does\n" +\
         "not participate in arbitrage. The cost in this case consists of only\n" +\
-        "charging cost and degradation cost from PHEV driving."
+        "charging cost and degradation cost from PHEV driving"
     testContainer = TextContainer(test_text)
     print(len(test_text))
-    indices = [12, 20, 92, 102, 130, 257, 258, 280, 305, 444, 519, 641]
+    indices = [12, 20, 92, 102, 130, 257, 258, 280, 305, 444, 519, 640, len(test_text) - 1]
     for index in indices:
         span = testContainer.get_whole_sentence(index)
         print(index, testContainer.text[index], span, testContainer.text[span[0]:span[1]])
@@ -580,20 +594,17 @@ def local_testing():
     ratio_match_case = found_substring_ratio(test_text, ["first", "the ", "By"], False)
     print(ratio_ignore_case, ratio_match_case)
     """
-    # html analysis:
-    """
-    html_text = TextContainer(requests.get("https://www.wikipedia.org/").text)
-    str_english = html_text.find_word("english")
-    with open('results.txt', 'w') as file:
-        for r in str_english:
-            file.write(str(r))
-            file.write(" ")
-        file.write("\n\n=======\n\n")
-        file.write(html_text.text)
-    """
 
     """
-    # Index testing:
+    # html analysis, this includes code keywords in the counting, so 
+    # the word indices are not very meaningful:
+    html_text = TextContainer(requests.get("https://www.wikipedia.org/").text)
+    results = html_text.find_word("english", as_dictionary= True)
+    print(results)
+    """
+
+    # Index testing, get word index from string character index:
+    """
     testContainer = TextContainer("The<first*line.of:text\nis>followed*by<another,\nand<yet<another,after<that.")
     #testContainer.index_text_words()   # <- optional
     indices = [5, 15, 21, 32, 41, 51, 63, 70]
@@ -601,7 +612,6 @@ def local_testing():
         print("Index\t", index, "\tis a letter ", testContainer.text[index], "\tand part of word number", \
             testContainer.get_word_index(index))
     """
-
 
 #Testing goes here:
 if __name__ == "__main__":
