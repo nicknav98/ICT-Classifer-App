@@ -3,8 +3,16 @@ from tkinter.filedialog import askopenfile
 import csv
 import PyPDF2
 from Reference import Reference, ReferenceList
+"""
+tkinter toolkit used for quick GUI setup. Documentation available at https://docs.python.org/3/library/tk.html
+Csv files were used for testing working with references before extracting them directly from pdf files becomes
+possible. Documentation: https://docs.python.org/3/library/csv.html
+PyPDF2 allows for reading and extracting text from pdf files, user guide: https://pypdf2.readthedocs.io/en/latest/
+"""
 
 # GUI setup
+# tkinter works using a canvas separated into a grid of columns and rows
+# use .grid to attach widgets to canvas
 root = tk.Tk()
 canvas = tk.Canvas(root, height=700, width=800)
 canvas.grid(columnspan=6, rowspan=12)
@@ -31,6 +39,7 @@ ref_list = []
 # firstReference = ReferenceList()
 
 
+# Removes stored elements from list, used when switching to a different file
 def reset_reference_list():
     reference_container.references.clear()
     text_box.delete("1.0", "end")
@@ -51,12 +60,11 @@ def csv_row_to_reference(row) -> Reference:
     return Reference(type= row[0], author= row[1], year_published= row[2])
 
 
-# Open Csv & extract entries
+# Open Csv file & extract rows into a list.
+# List used for ease of testing basic functionality, splitting the row elements into class attributes
+# a work in progress
 def open_csv_file():
     file = askopenfile(parent=root, mode="r", title="Choose a file", filetypes=[("Csv file", "*.csv")])
-    # reference_list = []
-    # length = len(reference_list)
-
     if file:
         reader = csv.reader(file)
         for row in reader:
@@ -65,9 +73,6 @@ def open_csv_file():
         text_box.insert(tk.END,"File Loaded" + '\n' + "References found: " + str(len(ref_list)))
         # change index to 0 in the following after implementing a way to ignore title row
         result = reference_container.reference_string_at_index(1)
-        # result = get_one_ref(reference_list)
-        # text_box.insert(tk.END, 'The first reference is:' + result + '\n')
-        # firstReference.construct(result)
 
         # just for testing ReferenceList
         reference_container.debug_printout()
@@ -77,6 +82,9 @@ def open_csv_file():
 
 
 # Open pdf & extract text
+# Testing basic text extraction functionality from pdf files
+# Should have logic to extract only the reference list of a thesis in the future, and then
+# removing the need for csv files
 def open_pdf_file():
     file = askopenfile(parent=root, mode="rb", title="Choose a file", filetypes=[("Pdf file", "*.pdf")])
     if file:
@@ -92,12 +100,14 @@ def display_type(type):
     return type
 
 
+# Displays all rows extracted with the open_csv_file function in the GUI text field
 def display_all_references():
     text_box.delete("1.0", "end")
     for row in ref_list:
         text_box.insert(tk.END, str(row) + '\n')
 
 
+# Displays a row of specified index in the GUI text field
 def display_ref_index():
     text_box.delete("1.0", "end")
     input1 = int(input_box1.get())
@@ -107,11 +117,14 @@ def display_ref_index():
         text_box.insert(tk.END, "Invalid Choice")
 
 
+# Takes input to search extracted rows for keywords
+# Function and search logic currently incomplete
 def display_search_result():
     text_box.delete("1.0", "end")
     input2 = input_box2.get()
-    # Function incomplete for now
 
+
+# Interactive tkinter widgets
 
 # Input Box
 input_box1 = tk.Entry(root)
