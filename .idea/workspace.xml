@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5a3b8de9-e211-4593-9b1c-9ef98d27a3d0" name="Changes" comment="-">
-      <change beforePath="$PROJECT_DIR$/.idea/ICT-Classifer-App.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ICT-Classifer-App.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_18_03_2022_10_37_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_18_03_2022_10_37__Changes_.xml" beforeDir="false" />
+    <list default="true" id="5a3b8de9-e211-4593-9b1c-9ef98d27a3d0" name="Changes" comment="-More UI features, tested with basic list for simplicity">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -144,7 +140,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647936431900</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="-More UI features, tested with basic list for simplicity">
+      <created>1649098315819</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1649098315819</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -152,7 +155,19 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="development" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
@@ -164,6 +179,7 @@
     <MESSAGE value="Textbox stretch fix" />
     <MESSAGE value="Textbox prints 'result'" />
     <MESSAGE value="-" />
-    <option name="LAST_COMMIT_MESSAGE" value="-" />
+    <MESSAGE value="-More UI features, tested with basic list for simplicity" />
+    <option name="LAST_COMMIT_MESSAGE" value="-More UI features, tested with basic list for simplicity" />
   </component>
 </project>
