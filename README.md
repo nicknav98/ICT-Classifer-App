@@ -35,7 +35,7 @@ TextContainer class is for passing strings by reference and analyzing contents o
 An instance of TextContainer can hold:
 - text
     - data type: string
-    OR
+OR
 - response object from Requests module
     - data type: Response, see requests module
     - probably not needed and can be removed, along with parts of constructor and properties that accomodate it
@@ -67,9 +67,9 @@ Returns a list or a dictionary, containing tuples that denote word's first lette
 
 word_affix_char, * by default, is a character that when found on either end of the word given as the argument, tells the function to also match larger words that contain the searched word.
 For example:
-"by*" will also match words like "byproduct" and "bygone"
-"*word" will also match words like "crossword" and "keyword"
-"*arch*" will also match words like "searched" and "parched"
+"by\*" will also match words like "byproduct" and "bygone"
+"\*word" will also match words like "crossword" and "keyword"
+"\*arch\*" will also match words like "searched" and "parched"
 
 If optional argument all_partial_matches is set as True, all words that contain the given word are included.
 
