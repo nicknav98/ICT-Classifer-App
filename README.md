@@ -1,8 +1,8 @@
 # ICT-Classifer-App
 
-====== Classes ======
+## Classes
 
- Reference
+##### *Reference*
 
 Reference class is for storing information about individual references. This class has not been developed very extensively, as getting information from references has been tricky and we haven't managed to do it reliably.
 
@@ -28,7 +28,11 @@ Currently each instance of Reference can hold:
     - data type: string
     - probably easiest part to get from text, but can be mangled in text by the text editor carrying it over to next line
 
-=== TextContainer ===
+##### *ReferenceType*
+
+Enumeration class (inherits Enum) used to define reference type enumerations. Having defined variables with string values can be used to avoid typos for Reference's type field.
+
+##### *TextContainer*
 
 TextContainer class is for passing strings by reference and analyzing contents of text, especially for evaluating relevance of referenced text material, by looking for specific words and sentences that contain those words. Several of the functions are not meant to be used directly by the end user, but rather are utilities for other functions of the class.
 

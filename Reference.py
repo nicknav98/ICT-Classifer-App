@@ -1,3 +1,4 @@
+from enum import Enum
 import re
 """
 Use keyword arguments when creating instances / objects:
@@ -105,6 +106,21 @@ class ReferenceList:
         #target_class = getattr(Reference, refinstance)
         #instance = target_class()
         #self.references.append(instance)
+
+"""
+Ideas for enumerations for reference types. Having defined variable names and strings prevents errors due to typos.
+"""
+class ReferenceType(Enum):
+    # variable name = "Display text"
+    RESEARCH_PAPER__PEER_REVIEWED = "Research paper, peer reviewed"
+    RESEARCH_PAPER__NOT_PEER_REVIEWED = "Research paper, not peer reviewed"
+    BLOG_POST = "Blog post"
+    PRODUCT_DESCRIPTION_BY_SELLER = "Product description by seller"
+    PRODUCT_REVIEW__SPONSORED = "Product review, sponsored"
+    PRODUCT_REVIEW__UNSPONSORED = "Product review, not sponsored"
+    WEB_ARTICLE = "Web article"
+
+
 
 # for testing, only if file is run on it's own:
 def local_testing():
