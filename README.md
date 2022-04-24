@@ -12,7 +12,6 @@
 
 ## Files / Modules
 
-
 ### main.py
 
 Contains main loop and interface implementation. Should probably keep user interface implementation in this file.
