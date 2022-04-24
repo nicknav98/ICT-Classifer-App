@@ -101,11 +101,6 @@ class ReferenceList:
         for ref in self.references:
             print(ref.get_as_string())
 
-    def construct(self, refinstance):
-        pass
-        #target_class = getattr(Reference, refinstance)
-        #instance = target_class()
-        #self.references.append(instance)
 
 """
 Ideas for enumerations for reference types. Having defined variable names and strings prevents errors due to typos.

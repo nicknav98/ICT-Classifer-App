@@ -7,11 +7,8 @@ import io
 from bs4 import BeautifulSoup
 
 """
+JUST DELETE THIS FILE IF IT'S NOT USED FOR FETCHING DATA FROM WEB
 """
-class SourceType(Enum):
-    WEBSITE = 0
-    PDF = 1
-
 
 #TODO:
 # 1. extract visible text / save a section of visible text as a string
