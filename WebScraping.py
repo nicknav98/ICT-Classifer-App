@@ -1,13 +1,11 @@
-from enum import Enum
 import requests
 import TextContentAnalysis as Analysis
-import re
 import PyPDF2
 import io
 from bs4 import BeautifulSoup
 
 """
-JUST DELETE THIS FILE IF IT'S NOT USED FOR FETCHING DATA FROM WEB
+JUST DELETE THIS FILE IF IT'S NOT USED FOR FETCHING DATA FROM WEBSITES
 """
 
 #TODO:
@@ -20,7 +18,7 @@ def local_testing():
 
 
     """
-    # remote pdf testing:
+    # remote pdf testing, this code downloads the whole file:
     resp = \
         requests.get("https://www.theseus.fi/bitstream/handle/10024/342934/Alhola_Juho.pdf?sequence=2&isAllowed=y")
     pdf_bytes = io.BytesIO(resp.content)

@@ -1,13 +1,12 @@
 from enum import Enum
 import re
-"""
-Use keyword arguments when creating instances / objects:
-newReference = Reference(type= "shitpost", name= "Keyword arguments rule", year_published= 1337)
-
-NOTE: Any of the arguments can be left out
-"""
 
 class Reference:
+    """
+    Holds information about a single reference.
+    Use keyword arguments when creating instances / objects.
+    NOTE: Any of the arguments can be left out.
+    """
     
     # can't be next to a year notation in a reference text,
     #   only applies if looking for just a year by itself
@@ -30,7 +29,7 @@ class Reference:
         self.year_published = year_published
         self.reference_url = reference_url
     
-    def get_as_string(self):
+    def get_as_string(self) -> str:
         return  \
             (("Name: " + str(self.name) + " ; ") if (self.name != None) else "") + \
             (("Type: " + str(self.type) + " ; ") if (self.type != None) else "") + \
@@ -102,9 +101,9 @@ class ReferenceList:
             print(ref.get_as_string())
 
 
-"""
-Ideas for enumerations for reference types. Having defined variable names and strings prevents errors due to typos.
-"""
+
+# Ideas for enumerations for reference types. Having defined variable names and strings prevents errors due to typos.
+
 class ReferenceType(Enum):
     # variable name = "Display text"
     RESEARCH_PAPER__PEER_REVIEWED = "Research paper, peer reviewed"
@@ -119,43 +118,29 @@ class ReferenceType(Enum):
 
 # for testing, only if file is run on it's own:
 def local_testing():
-    newReference = Reference.reference_from_string("Bolland, J., Wilson, J. (1994). \
+    new_reference = Reference.reference_from_string("Bolland, J., Wilson, J. (1994). \
 Three faces of integrative coordination: A model\
 of interorganizational relations in community-based health and human services.\
 Health Service Research. Luettavissa:\
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1070009/ Luettu 1.11.2021")
     
-    print(newReference.get_as_string())
+    print(new_reference.get_as_string())
+
+    
 
     # keyword arguments:
     """
-    newReference = Reference(type= "shitpost", name= "Keyword arguments rule", year_published= 1337)
-    print(newReference.type)
-    print(newReference.name)
-    print(newReference.year_published)
+    new_reference = Reference(type= ReferenceType.BLOG_POST, name= "Keyword arguments rule", year_published= 2022)
+    print(new_reference.type)
+    print(new_reference.name)
+    print(new_reference.year_published)
     ref_list = ReferenceList()
-    ref_list.add_reference(newReference)
-    ref_list.add_reference(newReference)
+    ref_list.add_reference(new_reference)
+    ref_list.add_reference(new_reference)
     ref_list.debug_printout()
-    newReference.author = "anonymous"
+    new_reference.author = "anonymous"
     ref_list.debug_printout()
     """
 
 if __name__ == "__main__":
     local_testing()
-
-"""
-# class setup
-class Reference:
-    def __init__(self, attr):
-        self.attr = attr
-
-class ReferenceList:
-    def __init__(self):
-        self.allClasses = []
-
-    def construct(self, refinstance):
-        target_class = getattr(Reference, refinstance)
-        instance = target_class()
-        self.allClasses.append(instance)
-"""
