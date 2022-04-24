@@ -21,7 +21,7 @@ Contains `TextContainer` class and a few other functions for analyzing text stri
 
 Contains classes for storing reference data:
 - `Reference` stores data of a single reference
-- `ReferenceList` stores references in a list and has a few functions for ... Probably not needed in its current implementation.
+- `ReferenceList` stores references in a list and has a few functions for accessing those reference data packages and printing out the whole list. Probably not needed in its current implementation.
 - `ReferenceType` is an enumeration class
 
 See more details on classes below.
