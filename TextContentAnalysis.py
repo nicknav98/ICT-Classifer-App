@@ -59,9 +59,12 @@ class TextContainer:
 
 
     def find_word(self, word: str,
+            ignore_case: bool = True,
             as_dictionary: bool = False,
             all_partial_matches: bool = False,  # returns all substring matches if true
             word_affix_char: str = '*',
+            start_index: int = 0,
+            stop_index: int = 0,
             return_word_indices: bool = False):
         """
         Searches for all occurences of a given string in the TextContainer's text
@@ -85,6 +88,11 @@ class TextContainer:
         found_words_dict = dict()
         found_words_list = list()
 
+        # make sure start_index is NOT less than 0 to make sure
+        # subsequent calculations in this function are not broken
+        if start_index < 0:
+            start_index = 0
+
         check_prefix = word[0] == word_affix_char
         if check_prefix:
             word = word[1:]
@@ -93,10 +101,23 @@ class TextContainer:
         if check_suffix:
             word = word[:-1]
 
-        substring_iterator = re.finditer(word, self.text, re.IGNORECASE)
+        # only searches between start_index and stop_index if they are specified
+        substring_iterator = re.finditer(word, 
+                self.text[start_index:stop_index if (stop_index > 0) else self.text_string_length], 
+                re.IGNORECASE
+                ) if ignore_case \
+            else re.finditer(word, 
+                self.text[start_index:stop_index if (stop_index > 0) else self.text_string_length]
+                )
+        
         while True:
             try:
                 match_span = next(substring_iterator).span()
+
+                # remember to account for start_index: if searching only from N,
+                # spans that are returned must also be incremented by N
+                match_span = (match_span[0] + start_index, match_span[1] + start_index)
+
                 match_span = self.get_word_span(match_span, 
                     include_prefix= (check_prefix), 
                     include_suffix= (check_suffix)
@@ -105,7 +126,7 @@ class TextContainer:
 
                 # how to return only proper matches
                 if (match_span == wordspan) or all_partial_matches:
-                    
+
                     if return_word_indices:
                         word_position = self.get_word_index(match_span[0])
                         if as_dictionary:
@@ -176,70 +197,24 @@ class TextContainer:
             return word_count
 
 
-    def find_sentences_with_words(self,
-            must_contain_all: list = list(),
-            must_contain_some: list = list(),
-            better_if_has_more: list = list(),
-            cannot_contain_any: list = list(),
-            prioritize_by_must_contain_some: bool = True,
-            ignore_case: bool = True,
-            max_sentences_returned = 0):
+    def found_word_ratio(self, sentence_span: tuple, substrings: list, ignore_case: bool = True):
         """
-        Finds sentences that:
-            - contain all of the must_contain_all
-            - contain at least one of must_contain_some
-                - *can* prefer more over less
-            - do NOT contain any forbidden substrings
-        and returns them in order from having most preferred substrings
-        to least.
+        Returns a fraction of how many of the given substrings are present in the main string
+        NOTE: Does NOT count the number of times a substring occurs, only whether it does or not.
+        If substrings list is empty, returns 1
         """
-        
-        # find all occurences of first word
-        word_results = self.find_word(must_contain_all[0])
-        untested_sentences = list()
-        ranked_sentences = list()
-        found_sentence = (-1,-1)
-        for i in range(len(word_results)):
-            found_sentence = self.get_whole_sentence(word_results[i][0])
-            if not (found_sentence in untested_sentences):
-                untested_sentences.append(found_sentence)
-        # look for the rest of required words; each must be found in each of the sentences
 
-        for i in range(len(untested_sentences)):
-            # test each sentence for substring ratios
-            ratio_required_all = found_substring_ratio(
-                untested_sentences[i], 
-                must_contain_all, 
-                ignore_case
-                )
-            ratio_required_some = found_substring_ratio(
-                untested_sentences[i], 
-                must_contain_some, 
-                ignore_case
-                )
-            ratio_priority = found_substring_ratio(
-                untested_sentences[i],
-                (better_if_has_more + must_contain_some) if prioritize_by_must_contain_some else better_if_has_more,
-                ignore_case
-                )
-            ratio_forbidden = found_substring_ratio(
-                untested_sentences[i], 
-                cannot_contain_any, 
-                ignore_case
-                )
-
-            if (ratio_required_all == 1) \
-            and (ratio_required_some > 0) \
-            and (ratio_forbidden == 0):
-                orderly_tuple_insert((untested_sentences[i], ratio_priority), ranked_sentences)
-        
-        print(ranked_sentences)
-        # clean up the list by removing the rank number:
-        for i in range(len(ranked_sentences)):
-            ranked_sentences[i] = ranked_sentences[i][0]
-        
-        return ranked_sentences[0:max_sentences_returned]
-        
+        all = len(substrings)
+        if all == 0:
+            return 1.0
+        else:
+            found = 0
+            for s in substrings:
+                if type(s) == str:
+                    found_words = self.find_word(s, ignore_case= ignore_case, start_index= sentence_span[0], stop_index= sentence_span[1])
+                    if len(found_words) > 0:
+                        found += 1
+            return found / all   
 
 
     def is_newline_with_dash(self, index: int) -> bool:
@@ -256,6 +231,7 @@ class TextContainer:
                     return True
 
         return False
+
 
     def get_word_span(self, \
             span: tuple, \
@@ -308,6 +284,7 @@ class TextContainer:
         
         return (start_index, stop_index)
 
+
     def get_whole_sentence(self, index: int) -> tuple:
         """
         Returns the span of the whole sentence around the specified index as a tuple
@@ -354,7 +331,96 @@ class TextContainer:
 
         if stop_index > len(self.text):
             stop_index = len(self.text)
+        
         return (start_index, stop_index)
+
+
+    def find_sentences_with_words(self,
+            must_contain_all: list = list(),
+            must_contain_some: list = list(),
+            better_if_has_more: list = list(),
+            cannot_contain_any: list = list(),
+            prioritize_by_must_contain_some: bool = True,
+            ignore_case: bool = True,
+            max_sentences_returned = 0) -> list:
+        """
+        Finds sentences that:
+            - contain all of the must_contain_all
+            - contain at least one of must_contain_some
+                - *can* prefer more over less
+            - do NOT contain any forbidden substrings
+        and returns them in order from having most preferred substrings
+        to least.
+        """
+        untested_sentences = list()
+        ranked_sentences = list()
+        found_sentence = (-1,-1)
+
+        # if must_contain_all -list has at least one word, all sentences must contain it,
+        # and therefore any sentence that does not can be filtered out right away
+        if len(must_contain_all) > 0:
+            # find all occurences of first word
+            word_results = self.find_word(must_contain_all[0], ignore_case= ignore_case)
+            for word_span in word_results:
+                found_sentence = self.get_whole_sentence(word_span[0])
+                if (found_sentence[0] != found_sentence[1]) and (not (found_sentence in untested_sentences)):
+                    untested_sentences.append(found_sentence)
+        
+        # if must_contain_all -list is empty, look for any occurence in must_contain_some
+        #   if that is empty too, return, see below 
+        elif len(must_contain_some) > 0:
+            # find a sentence for each of the optional
+            word_results = list()
+            for optional_word in must_contain_some:
+                word_results += self.find_word(optional_word, ignore_case= ignore_case)
+            for word_span in word_results:
+                found_sentence = self.get_whole_sentence(word_span[0])
+                if (found_sentence[0] != found_sentence[1]) and (not (found_sentence in untested_sentences)):
+                    untested_sentences.append(found_sentence)
+
+        # if both must_contain_all and must_contain_some are empty, there is probably no point in searching
+        else:
+            print("'find_sentences_with_words': at least one definitive requirement must be specified!")
+            # returns empty list
+            return ranked_sentences
+
+        # look for the rest of required words; each must be found in each of the sentences
+        for i in range(len(untested_sentences)):
+            # test each sentence for substring ratios
+            #sentence_string = self.text[untested_sentences[i][0]:untested_sentences[i][1]]
+            #print("Debug: tested sentence is:", sentence_string)
+            ratio_required_all = self.found_word_ratio(#found_substring_ratio(
+                untested_sentences[i],#sentence_string, 
+                must_contain_all, 
+                ignore_case
+                )
+            ratio_required_some = self.found_word_ratio(#found_substring_ratio(
+                untested_sentences[i],#sentence_string, 
+                must_contain_some, 
+                ignore_case
+                )
+            ratio_priority = self.found_word_ratio(#found_substring_ratio(
+                untested_sentences[i],#sentence_string,
+                (better_if_has_more + must_contain_some) if prioritize_by_must_contain_some else better_if_has_more,
+                ignore_case
+                )
+            ratio_forbidden = self.found_word_ratio(#found_substring_ratio(
+                untested_sentences[i],#sentence_string, 
+                cannot_contain_any, 
+                ignore_case
+                )
+
+            if (ratio_required_all == 1) \
+            and (ratio_required_some > 0) \
+            and ((ratio_forbidden == 0) or len(cannot_contain_any) == 0):
+                orderly_tuple_insert((untested_sentences[i], ratio_priority), ranked_sentences)
+            
+        
+        # clean up the list by removing the rank number:
+        for i in range(len(ranked_sentences)):
+            ranked_sentences[i] = ranked_sentences[i][0]
+        
+        return ranked_sentences[0:max_sentences_returned if (max_sentences_returned > 0) else len(ranked_sentences)]
 
 
     def find_links_in_html(self,
@@ -526,6 +592,7 @@ def local_testing():
     2. Run the script by itself
     test_text string is an excerpt from a larger text, but i can't remember where i got it :/
     """
+    # sentences with words:
 
     # finding numbers:
     """
@@ -554,25 +621,32 @@ def local_testing():
         "not participate in arbitrage. The cost in this case consists of only\n" +\
         "charging cost and degradation cost from PHEV driving."
     testContainer = TextContainer(test_text)
+    print("The processed text is:\n\n", testContainer.text, "\n\n")
     words_to_find = ["case", "The", "base*", "is"]
+    print("The words to find are:\n", "'case', 'The', anything that starts with 'base', and 'is'", "\n\n")
     for word in words_to_find:
-        #w_list = testContainer.find_word(word)
-        w_dict = testContainer.find_word(word, as_dictionary= True)
-        #print(w_list)
+        w_dict = testContainer.find_word(word, as_dictionary= True, ignore_case= False)
+        print("The word '", word, "' is found in spans:\n")
         print(w_dict)
-    print(" -- -- ")
+        print("\n")
+    print("\n")
+
     # all partial matches, get word indices instead:
-    words_to_find = ["case", "The", "base*", "is"]
+    words_to_find = ["case", "the", "base", "is"]
+    print("Looking for following sequences:\n", words_to_find, "\nLooking for the ordinal numbers of words that contain above sequences\n")
     for word in words_to_find:
-        #w_list = testContainer.find_word(word)
         w_dict = testContainer.find_word(word, as_dictionary= True, 
             all_partial_matches= True, 
             return_word_indices= True)
-        #print(w_list)
+        print("The word '", word, "' is word(s) number:\n\n")
         print(w_dict)
+        print("\n")
+    print("==================================")
+    print("==================================\n\n")
     #"""
 
-    # getting whole sentences:
+
+    # getting whole sentences by character index:
     """
     test_text = "To address the uncertainty of data parameters including those\n" +\
         "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
@@ -585,35 +659,62 @@ def local_testing():
         "not participate in arbitrage. The cost in this case consists of only\n" +\
         "charging cost and degradation cost from PHEV driving"
     testContainer = TextContainer(test_text)
+    print("Let's try sentences.\nThe processed text is:\n\n", testContainer.text, "\n\n")
     print(len(test_text))
     indices = [12, 20, 92, 102, 130, 257, 258, 280, 305, 444, 519, 640, len(test_text) - 1]
+    print("Let's look what sentences include character indices:\n", indices, "\n\n")
     for index in indices:
         span = testContainer.get_whole_sentence(index)
-        print(index, testContainer.text[index], span, testContainer.text[span[0]:span[1]])
+        print("Character number", index, "in the string is: ", 
+            testContainer.text[index], ". The sentence spans indices: ", span, " and the whole sentence is:\n\n", testContainer.text[span[0]:span[1]])
+        print("\n")
+    
+    print("==================================")
+    print("==================================\n\n")
+    """
+    
+    # finding sentences with words:
+    """
+    test_text = "To address the uncertainty of data parameters including those\n" +\
+        "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
+        "zation model is developed to estimate the arbitrage proﬁt of PHEV\n" +\
+        "under three scenarios of electricity market and buyer behavior.\n" +\
+        "The arbitrage proﬁt is measured as the difference between the\n" +\
+        "baseline case and the arbitrage case. The cost in the arbitrage case\n" +\
+        "is the sum of charging cost and battery degradation cost, minuses\n" +\
+        "the revenue from V2G discharging. In the baseline case, PHEV does\n" +\
+        "not participate in arbitrage, and the cost in this case consists of only\n" +\
+        "charging cost and degradation cost from PHEV driving"
+    testContainer = TextContainer(test_text)
+
+    print("Next trying to find sentences with words, from the text:\n\n", testContainer.text, "\n")
+    required_a = ["cost", "arbitrage"]
+    required_s = ["PHEV", "V2G"]
+    priority = ["V2G"]
+    sentences_w_words = testContainer.find_sentences_with_words(must_contain_all=required_a,
+        must_contain_some=required_s,
+        better_if_has_more=priority)
+    print("The sentences should contain all of: ", required_a, ",\nat least one of: ", required_s, "\nand are prioritized by: ", priority, "\n\n")
+    for s in sentences_w_words:
+        print("\n")
+        print(testContainer.text[s[0]:s[1]])
         print("\n")
     """
-
-    # substring ratio test:
-    #   need to use find word instead? use * to denote that the word continues forward or back
-    #                                                           "the*" can be "there"
+    
+    # found word ratio test:
     """
     test_text = "The first line of text\nis followed by another,\nand yet another after that."
-    ratio_ignore_case = found_substring_ratio(test_text, ["first", "the ", "By"])
-    ratio_match_case = found_substring_ratio(test_text, ["first", "the ", "By"], False)
+    testContainer = TextContainer(test_text)
+    ratio_ignore_case = testContainer.found_word_ratio((0,0), ["first", "the*", "By"])
+    ratio_match_case = testContainer.found_word_ratio((0,0), ["first", "the", "By"], ignore_case= False)
     print(ratio_ignore_case, ratio_match_case)
-    """
-
-    """
-    # html analysis, this includes code keywords in the counting, so 
-    # the word indices are not very meaningful:
-    html_text = TextContainer(requests.get("https://www.wikipedia.org/").text)
-    results = html_text.find_word("english", as_dictionary= True)
-    print(results)
     """
 
     # Index testing, get word index from string character index:
     """
+    print("=================================\n\n")
     testContainer = TextContainer("The<first*line.of:text\nis>followed*by<another,\nand<yet<another,after<that.")
+    print(testContainer.text)
     #testContainer.index_text_words()   # <- optional
     indices = [5, 15, 21, 32, 41, 51, 63, 70]
     for index in indices:

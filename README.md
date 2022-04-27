@@ -1,5 +1,32 @@
 # ICT-Classifer-App
 
+## The goal of this project
+
+The main purpose of this thesis reference classifier is to help thesis reviewers evaluate the quality of references.
+
+- Identifying material type (e.g. research peper, blog post)
+- Identifying author(s) and publisher(s)
+- Checking whether the source material is reachable in cases where URL is included
+- Identifying publication year / date
+- Evaluating relevance to the topic, currently using TextContentAnalysis module
+
+## User interface
+
+Currently the interface can:
+
+- open PDF files and extract text from them
+- open csv files with formatted reference data
+    - this feature is no longer needed
+
+### Future goals
+
+Ultimately this application should be able to take a file, most likely a PDF, and evaluate the references that it finds. During development it may be better to have input fields for individual references and for text needs to be analyzed / evaluated.
+
+Ideally the app should be able to parse written references, but it should also be possible for user to make corrections to what the app parses from the written references.
+
+
+## Files / Modules
+
 ##### Some important notations, mentioning just in case:
 
 - `variable_name: datatype`
@@ -7,14 +34,11 @@
 
 - Double underscore in front of a variable name, like `__variable`, means that the variable is meant to be internal / private to the class, and should not be accessed or manipulated outside of the class functions
 
-- Also, files have `local_testing()` functions that can be used to test code in that file, with code segments commented out with `""" """` ; feel free to uncomment parts to see how different parts of code work, like demos of sorts.
-
-
-## Files / Modules
+- Also, files have `local_testing()` functions that can be used to test code in that file, with code segments commented out with triple quotation marks `""" """` usually used for docstrings to describe what functions and classes are for; feel free to uncomment parts to see how different parts of the code work.
 
 ### main.py
 
-Contains main loop and interface implementation. Should probably keep user interface implementation in this file.
+Contains main loop and interface implementation. Should probably keep user interface implementation in this file. Current UI is implemented with `tkinter`
 
 Does not contain class definitions.
 
@@ -105,7 +129,7 @@ Contains `TextContainer` class and a few other functions for analyzing text stri
 
 ##### `TextContainer`
 
-`TextContainer` class is for passing strings by reference and analyzing contents of text, especially for evaluating relevance of referenced text material, by looking for specific words and sentences that contain those words. Several of the functions are not meant to be used directly by the end user, but rather are utilities for other functions of the class.
+`TextContainer` class is for passing strings by reference and analyzing contents of a text, especially for evaluating relevance of referenced text material, by looking for specific words and sentences that contain those words. Several of the functions are not meant to be used directly by the end user, but rather are utilities for other functions of the class.
 
 An instance of `TextContainer` can hold:
 - `__text: str`
