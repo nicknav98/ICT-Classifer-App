@@ -590,7 +590,8 @@ def local_testing():
     Use this for local testing of module's functions:
     1. Write content of your choosing in local_testing -function
     2. Run the script by itself
-    test_text string is an excerpt from a larger text, but i can't remember where i got it :/
+    test_text string is an excerpt from a research paper by Duo (Rick) Shang and Guodong Sun:
+    https://www.sciencedirect.com/science/article/abs/pii/S0301421516302506
     """
     # sentences with words:
 
@@ -609,7 +610,7 @@ def local_testing():
     """
 
     # finding words:
-    #"""
+    """
     test_text = "To address the uncertainty of data parameters including those\n" +\
         "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
         "zation model is developed to estimate the arbitrage proﬁt of PHEV\n" +\
@@ -643,7 +644,7 @@ def local_testing():
         print("\n")
     print("==================================")
     print("==================================\n\n")
-    #"""
+    """
 
 
     # getting whole sentences by character index:
@@ -675,22 +676,32 @@ def local_testing():
     
     # finding sentences with words:
     """
-    test_text = "To address the uncertainty of data parameters including those\n" +\
-        "in the technology, market, and society ﬁeld, a stochastic optimi-\n" +\
-        "zation model is developed to estimate the arbitrage proﬁt of PHEV\n" +\
-        "under three scenarios of electricity market and buyer behavior.\n" +\
-        "The arbitrage proﬁt is measured as the difference between the\n" +\
-        "baseline case and the arbitrage case. The cost in the arbitrage case\n" +\
-        "is the sum of charging cost and battery degradation cost, minuses\n" +\
-        "the revenue from V2G discharging. In the baseline case, PHEV does\n" +\
-        "not participate in arbitrage, and the cost in this case consists of only\n" +\
-        "charging cost and degradation cost from PHEV driving"
+    test_text = "This module estimates the battery degradation process. The\n\
+lifespan of a battery, either calendar life or cycle life, is an im-\n\
+portant factor inﬂuencing the battery economics, and hence that of\n\
+the PHEV. Calendar life measures the time that a battery degrades\n\
+to a speciﬁc level, and is an indicator of its ability to withstand\n\
+degradation over time without concerning how the battery is used\n\
+(Axsen et al., 2008). Cycle life, the number of charging and dis-\n\
+charging cycles a battery can have before it degrades to a speciﬁc\n\
+level, is inﬂuenced by the depth of discharge (DOD), current, and\n\
+temperature of charging/discharging (Köhler et al., 2002; Omar,\n\
+et al. 2010; Ritchie, 2004). The charging and discharging involve\n\
+chemical reactions. The reactivity of chemicals declines, and the\n\
+resistance increases, as the number of charging/discharging cycle\n\
+increases. The battery degrades faster at higher charging/dischar-\n\
+ging temperature (Axsen et al., 2008). Battery degradation leads to\n\
+declined voltage and capacity. When the voltage and capacity drop\n\
+below a certain level (normally 80% of the original level), the\n\
+battery needs to be replaced as it cannot safely and functionally\n\
+power the vehicle (Meissner and Richter, 2003). The battery\n\
+usually reaches cycle life ﬁrst before the calendar life."
     testContainer = TextContainer(test_text)
 
     print("Next trying to find sentences with words, from the text:\n\n", testContainer.text, "\n")
-    required_a = ["cost", "arbitrage"]
-    required_s = ["PHEV", "V2G"]
-    priority = ["V2G"]
+    required_a = ["battery", "degra*"]
+    required_s = ["voltage", "capacity", "discharg*"]
+    priority = ["cycl*"]
     sentences_w_words = testContainer.find_sentences_with_words(must_contain_all=required_a,
         must_contain_some=required_s,
         better_if_has_more=priority)
